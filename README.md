@@ -1,70 +1,165 @@
-# Getting Started with Create React App
+# SoundCircle — Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Aplicação React para o SoundCircle, uma rede social de descoberta e avaliação musical.
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## Stack
+
+- **React 19**
+- **React Router 6**
+- **Axios** (comunicação com API)
+- **Create React App 5.0.1**
+
+---
+
+## Pré-requisitos
+
+- Node.js 18+ (recomendado 20+)
+- npm ou yarn
+- Backend do SoundCircle rodando em `http://localhost:5000`
+
+---
+
+## Instalação
+
+```bash
+cd client
+npm install
+```
+
+---
+
+## Variáveis de Ambiente
+
+Crie um arquivo `.env` dentro da pasta `client/`:
+
+```env
+REACT_APP_API_BASE_URL=http://localhost:5000
+```
+
+Se não definida, o fallback é `http://localhost:5000`.
+
+---
+
+## Scripts Disponíveis
+
+No diretório `client/`, você pode executar:
 
 ### `npm start`
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Roda a aplicação em modo de desenvolvimento.\
+Abra [http://localhost:3000](http://localhost:3000) para visualizar no navegador.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+A página recarrega automaticamente quando você faz alterações.\
+Você também verá erros de lint no console.
 
 ### `npm test`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Inicia o executor de testes em modo interativo (watch mode).\
+Veja a seção sobre [execução de testes](https://facebook.github.io/create-react-app/docs/running-tests) para mais informações.
 
 ### `npm run build`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Gera a versão de produção na pasta `build`.\
+Empacota corretamente o React em modo de produção e otimiza o build para o melhor desempenho.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+O build é minificado e os nomes dos arquivos incluem os hashes.\
+Sua aplicação está pronta para ser implantada!
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Veja a seção sobre [implantação](https://facebook.github.io/create-react-app/docs/deployment) para mais informações.
 
 ### `npm run eject`
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+**Atenção: esta é uma operação sem volta. Uma vez que você executa `eject`, não pode voltar atrás!**
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Se você não estiver satisfeito com as escolhas de ferramentas e configuração do build, pode executar `eject` a qualquer momento. Este comando removerá a única dependência de build do seu projeto.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Em vez disso, ele copiará todos os arquivos de configuração e as dependências transitivas (webpack, Babel, ESLint, etc.) diretamente para o seu projeto, para que você tenha controle total sobre elas. Todos os comandos, exceto `eject`, continuarão funcionando, mas apontarão para os scripts copiados, para que você possa ajustá-los. A partir deste ponto, você estará por sua conta.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Você não precisa usar `eject`. O conjunto de recursos selecionados é adequado para implantações pequenas e médias, e você não deve se sentir obrigado a usar este recurso. No entanto, entendemos que esta ferramenta não seria útil se você não pudesse customizá-la quando estiver pronto para isso.
 
-## Learn More
+---
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Estrutura de Diretórios
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```
+client/
+├── public/
+├── src/
+│   ├── api/                   # Configuração e chamadas de API
+│   │   ├── axiosConfig.js     # Instância Axios (baseURL, cookies, interceptor 401)
+│   │   ├── authApi.js         # Autenticação
+│   │   ├── feedApi.js         # Feed, ratings, comentários, sentimento
+│   │   ├── friendsApi.js      # Amizades
+│   │   └── userApi.js         # Perfil e músicas avaliadas
+│   ├── components/            # Componentes reutilizáveis
+│   │   ├── common/
+│   │   │   └── Logo.jsx       # SVG do logo
+│   │   ├── layout/
+│   │   │   ├── Navbar.jsx     # Barra de navegação
+│   │   │   └── ProtectedRoute.jsx  # Guarda de rotas protegidas
+│   │   ├── FeedView.js        # Container de lista de músicas
+│   │   ├── MusicCard.jsx      # Card de música completo
+│   │   ├── PromoteModal.jsx   # Modal de impulsionamento
+│   │   └── StarRating.jsx     # Componente de 5 estrelas
+│   ├── context/
+│   │   └── AuthContext.jsx    # Contexto global de autenticação
+│   ├── pages/                 # Páginas da aplicação
+│   │   ├── Feed.js            # Feed principal (diário/semanal/mensal)
+│   │   ├── LoginPage.jsx      # Tela de login
+│   │   ├── RegisterPage.jsx   # Tela de cadastro
+│   │   ├── ProfilePage.jsx    # Perfil do usuário
+│   │   ├── RatedTracksPage.jsx # Músicas avaliadas
+│   │   ├── FriendsPage.jsx    # Gerenciamento de amigos
+│   │   └── FriendFeedPage.jsx # Avaliações de um amigo
+│   ├── App.js                 # Rotas e providers
+│   ├── index.css              # Estilos globais
+│   └── index.js               # Entry point
+├── package.json
+└── README.md
+```
 
-### Code Splitting
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## Rotas
 
-### Analyzing the Bundle Size
+| Rota | Protegida | Descrição |
+|------|-----------|-----------|
+| `/login` | Não | Tela de login |
+| `/register` | Não | Tela de cadastro |
+| `/` | **Sim** | Feed principal com busca e filtros |
+| `/profile` | **Sim** | Perfil e edição de nome |
+| `/avaliadas` | **Sim** | Suas avaliações |
+| `/amigos` | **Sim** | Gerenciar amizades |
+| `/amigos/:friendId/avaliacoes` | **Sim** | Ver avaliações de um amigo |
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+---
 
-### Making a Progressive Web App
+## Autenticação
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+- Sessão gerenciada via **cookie HttpOnly** entregue pelo backend.
+- O frontend **não manipula tokens JWT** diretamente.
+- Interceptor Axios: em qualquer resposta **401**, redireciona para `/login`.
+- `AuthContext` restaura a sessão ao montar a aplicação (`GET /api/auth/me`).
+- `ProtectedRoute` bloqueia acesso a rotas protegidas enquanto não autenticado.
 
-### Advanced Configuration
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## Testes
 
-### Deployment
+```bash
+# Rodar todos os testes (modo CI)
+npm test -- --watchAll=false
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+# Rodar em modo interativo
+npm test
+```
 
-### `npm run build` fails to minify
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## Decisões de Design
+
+- **Estilização 100% inline** (objetos `style`) — sem CSS Modules, Tailwind ou bibliotecas de UI externas.
+- **React 19** — versão mais recente do React.
+- **Sem testes E2E** configurados — apenas testes de unidade com React Testing Library.
