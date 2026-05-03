@@ -2,6 +2,8 @@
 
 Aplicação React para o SoundCircle, uma rede social de descoberta e avaliação musical.
 
+**Deploy:** http://100.48.20.219/
+
 ---
 
 ## Stack
@@ -17,7 +19,7 @@ Aplicação React para o SoundCircle, uma rede social de descoberta e avaliaçã
 
 - Node.js 18+ (recomendado 20+)
 - npm ou yarn
-- Backend do SoundCircle rodando em `http://localhost:5000`
+- Backend do SoundCircle rodando em `http://100.48.20.219/`
 
 ---
 
