@@ -1,9 +1,9 @@
-import React, { useState } from "react";
-import StarRating from "./StarRating";
+import React, { useEffect, useState } from "react";
 import PromoteModal from "./PromoteModal";
+import RatingModal from "./RatingModal";
 import { rateTrack, deleteRating, getComments, postComment } from "../api/feedApi";
 
-function MusicCard({ track, index }) {
+function MusicCard({ track, index, showAdvertBadge }) {
   const [userScore, setUserScore] = useState(track.user_score || 0);
   const [avgRating, setAvgRating] = useState(track.average_rating || 0);
   const [ratingCount, setRatingCount] = useState(track.rating_count || 0);
@@ -11,10 +11,11 @@ function MusicCard({ track, index }) {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showPromote, setShowPromote] = useState(false);
-
-  const isPromoted = track.is_promoted === true;
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [isPromoted, setIsPromoted] = useState(track.is_promoted === true);
 
   const handleRate = async (score) => {
     setSaving(true);
@@ -55,21 +56,28 @@ function MusicCard({ track, index }) {
     }
   };
 
-  const loadComments = async () => {
-    if (comments.length > 0) {
-      setShowComments(!showComments);
-      return;
-    }
+  const fetchComments = async () => {
     setLoadingComments(true);
     try {
       const res = await getComments(track.spotify_id);
       setComments(res.data.comments || []);
-      setShowComments(true);
     } catch {
       alert("Erro ao carregar comentários.");
     } finally {
       setLoadingComments(false);
+      setCommentsLoaded(true);
     }
+  };
+
+  useEffect(() => {
+    fetchComments();
+  }, []);
+
+  const loadComments = async () => {
+    if (!commentsLoaded) {
+      await fetchComments();
+    }
+    setShowComments((current) => !current);
   };
 
   const handlePostComment = async (e) => {
@@ -80,77 +88,60 @@ function MusicCard({ track, index }) {
       setNewComment("");
       const res = await getComments(track.spotify_id);
       setComments(res.data.comments || []);
+      setCommentsLoaded(true);
     } catch {
       alert("Erro ao enviar comentário.");
     }
   };
 
+  const handlePromoteSuccess = () => {
+    setIsPromoted(true);
+  };
+
   const sentiment = track.sentiment_adjustment || 0;
   const displayRating = Math.max(sentiment, Math.min(5.0, avgRating + sentiment));
-
-  const cardBg = isPromoted ? "#eff6ff" : "#fff";
-  const cardBorder = isPromoted ? "1px solid #bfdbfe" : "1px solid #f1f5f9";
 
   return (
     <div
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: "0.75rem",
-        padding: "1.25rem",
-        borderRadius: "16px",
-        background: cardBg,
-        border: cardBorder,
-        boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02)",
+        gap: "1rem",
+        padding: "1.5rem",
+        borderRadius: "14px",
+        background: "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))",
+        boxShadow: "0 10px 30px rgba(2,6,23,0.4), inset 0 1px 0 rgba(255,255,255,0.02)",
+        border: "1px solid rgba(255,255,255,0.02)",
         transition: "box-shadow 0.2s ease",
         position: "relative",
       }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow =
-          "0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow =
-          "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02)";
-      }}
     >
+      {/* Header: Imagem + Info + Rating */}
       <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem" }}>
-        <span
-          style={{
-            fontWeight: 700,
-            fontSize: "0.85rem",
-            color: "#cbd5e1",
-            minWidth: "1.5rem",
-            textAlign: "center",
-            marginTop: "0.2rem",
-          }}
-        >
-          {index + 1}
-        </span>
-
         {track.cover_url ? (
           <img
             src={track.cover_url}
             alt={track.name}
             style={{
-              width: "72px",
-              height: "72px",
-              borderRadius: "12px",
+              width: "80px",
+              height: "80px",
+              borderRadius: "10px",
               objectFit: "cover",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+              flexShrink: 0,
             }}
           />
         ) : (
           <div
             style={{
-              width: "72px",
-              height: "72px",
-              borderRadius: "12px",
-              background: "#f1f5f9",
+              width: "80px",
+              height: "80px",
+              borderRadius: "10px",
+              background: "rgba(255,255,255,0.08)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: "1.5rem",
+              fontSize: "2rem",
+              flexShrink: 0,
             }}
           >
             🎵
@@ -158,263 +149,240 @@ function MusicCard({ track, index }) {
         )}
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-            <p
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.3rem" }}>
+            <h3
               style={{
                 margin: 0,
-                fontWeight: 600,
-                fontSize: "1.05rem",
-                color: "#0f172a",
-                lineHeight: 1.3,
+                fontWeight: 700,
+                fontSize: "1.1rem",
+                color: "#e6eef8",
+                lineHeight: 1.2,
               }}
             >
-              {isPromoted && <span style={{ marginRight: "0.3rem" }}>🚀</span>}
               {track.name}
-            </p>
-            {isPromoted && (
+            </h3>
+            {showAdvertBadge && (
               <span
                 style={{
+                  background: "linear-gradient(90deg,#206bff,#1fc0ff)",
+                  color: "#fff",
+                  padding: "0.3rem 0.8rem",
+                  borderRadius: "12px",
                   fontSize: "0.65rem",
                   fontWeight: 700,
-                  padding: "0.15rem 0.5rem",
-                  borderRadius: "9999px",
-                  background: "#2563eb",
-                  color: "#fff",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
+                  whiteSpace: "nowrap",
+                  boxShadow: "0 4px 12px rgba(33,96,255,0.3)",
                 }}
               >
-                {track.promotion_label || "Anúncio"}
+                ANÚNCIO
               </span>
             )}
           </div>
-          <p style={{ margin: "0.2rem 0 0", color: "#64748b", fontSize: "0.9rem" }}>
+          <p style={{ margin: "0 0 0.1rem 0", color: "#a9d1ff", fontSize: "0.95rem" }}>
             {track.artist}
           </p>
           {track.album && (
-            <p style={{ margin: "0.15rem 0 0", color: "#94a3b8", fontSize: "0.8rem" }}>
+            <p style={{ margin: "0", color: "#7f98ad", fontSize: "0.85rem" }}>
               {track.album}
             </p>
           )}
-
-          <div
-            style={{
-              marginTop: "0.6rem",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.75rem",
-              flexWrap: "wrap",
-            }}
-          >
-            {ratingCount > 0 ? (
-              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                <StarRating value={displayRating} readOnly />
-                <span style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: 500 }}>
-                  {displayRating.toFixed(1)}
-                </span>
-              </div>
-            ) : sentiment !== 0 ? (
-              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                <StarRating value={sentiment} readOnly />
-                <span style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: 500 }}>
-                  {sentiment.toFixed(1)}
-                </span>
-              </div>
-            ) : (
-              <StarRating value={0} readOnly />
-            )}
-            {sentiment !== 0 && (
-              <span
-                style={{
-                  fontSize: "0.75rem",
-                  fontWeight: 600,
-                  padding: "0.2rem 0.6rem",
-                  borderRadius: "9999px",
-                  background: sentiment > 0 ? "#dcfce7" : "#fee2e2",
-                  color: sentiment > 0 ? "#15803d" : "#b91c1c",
-                }}
-              >
-                {sentiment > 0 ? "↑" : "↓"} {Math.abs(sentiment).toFixed(1)}
-              </span>
-            )}
-          </div>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "flex-end" }}>
-          {track.spotify_url && (
-            <a
-              href={track.spotify_url}
-              target="_blank"
-              rel="noopener noreferrer"
+        {/* Rating + Botões Spotify e Impulsionar à direita */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-end",
+            gap: "0.75rem",
+          }}
+        >
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <button
+              onClick={() => window.open(`https://open.spotify.com/track/${track.spotify_id}`, "_blank")}
               style={{
-                padding: "0.5rem 1rem",
-                background: "#10b981",
+                padding: "0.5rem 1.5rem",
+                background: "#1ed760",
+                border: "none",
+                borderRadius: "20px",
                 color: "#fff",
-                textDecoration: "none",
-                borderRadius: "9999px",
-                fontSize: "0.8rem",
-                fontWeight: 500,
-                whiteSpace: "nowrap",
-                transition: "background 0.2s ease",
+                fontSize: "0.9rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                transition: "all 0.2s",
+                boxShadow: "0 6px 16px rgba(30,215,96,0.3)",
               }}
-              onMouseEnter={(e) => (e.target.style.background = "#059669")}
-              onMouseLeave={(e) => (e.target.style.background = "#10b981")}
+              onMouseEnter={(e) => {
+                e.target.style.boxShadow = "0 8px 20px rgba(30,215,96,0.5)";
+                e.target.style.transform = "scale(1.05)";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.boxShadow = "0 6px 16px rgba(30,215,96,0.3)";
+                e.target.style.transform = "scale(1)";
+              }}
             >
               Spotify
-            </a>
-          )}
-
-          {!isPromoted && (
+            </button>
             <button
               onClick={() => setShowPromote(true)}
               style={{
-                padding: "0.4rem 0.9rem",
-                background: "#eff6ff",
-                border: "1px solid #bfdbfe",
-                borderRadius: "9999px",
+                padding: "0.5rem 1.5rem",
+                background: "rgba(236,72,153,0.2)",
+                border: "1px solid rgba(236,72,153,0.4)",
+                borderRadius: "20px",
+                color: "#f472b6",
+                fontSize: "0.9rem",
+                fontWeight: 700,
                 cursor: "pointer",
-                fontSize: "0.8rem",
-                fontWeight: 600,
-                color: "#2563eb",
-                whiteSpace: "nowrap",
-                transition: "all 0.2s ease",
+                transition: "all 0.2s",
               }}
               onMouseEnter={(e) => {
-                e.target.style.background = "#dbeafe";
+                e.target.style.background = "rgba(236,72,153,0.3)";
+                e.target.style.borderColor = "rgba(236,72,153,0.6)";
               }}
               onMouseLeave={(e) => {
-                e.target.style.background = "#eff6ff";
+                e.target.style.background = "rgba(236,72,153,0.2)";
+                e.target.style.borderColor = "rgba(236,72,153,0.4)";
               }}
             >
               🚀 Impulsionar
             </button>
-          )}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+            <span style={{ fontSize: "1.3rem" }}>⭐</span>
+            <span style={{ fontSize: "1.2rem", fontWeight: 700, color: "#fbbf24" }}>
+              {displayRating > 0 ? displayRating.toFixed(1) : "—"}
+            </span>
+          </div>
+          <span style={{ fontSize: "0.75rem", color: "#7f98ad" }}>
+            {ratingCount} {ratingCount === 1 ? "avaliação" : "avaliações"}
+          </span>
         </div>
       </div>
 
-      <div
-        style={{
-          borderTop: "1px solid #f8fafc",
-          paddingTop: "0.75rem",
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.5rem",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          <span style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: 500 }}>
-            Sua nota{saving ? " …" : ""}
-          </span>
-          <StarRating value={userScore} onChange={handleRate} />
-        </div>
-
+      {/* Botões de ação */}
+      <div style={{ display: "flex", gap: "0.75rem" }}>
+        <button
+          onClick={() => setShowRatingModal(true)}
+          style={{
+            flex: 1,
+            padding: "0.75rem 1rem",
+            background: "linear-gradient(90deg,#206bff,#1fc0ff)",
+            border: "none",
+            borderRadius: "12px",
+            color: "#fff",
+            fontSize: "0.95rem",
+            fontWeight: 700,
+            cursor: "pointer",
+            transition: "all 0.2s",
+            boxShadow: "0 8px 20px rgba(33,96,255,0.2)",
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.boxShadow = "0 12px 28px rgba(33,96,255,0.35)";
+            e.target.style.transform = "translateY(-2px)";
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.boxShadow = "0 8px 20px rgba(33,96,255,0.2)";
+            e.target.style.transform = "translateY(0)";
+          }}
+        >
+          ⭐ Dar Nota
+        </button>
         <button
           onClick={loadComments}
           style={{
-            alignSelf: "flex-start",
-            padding: "0.4rem 0.9rem",
-            background: "#f8fafc",
-            border: "1px solid #e2e8f0",
-            borderRadius: "9999px",
+            flex: 1,
+            padding: "0.75rem 1rem",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: "12px",
+            color: "#a9d1ff",
+            fontSize: "0.95rem",
+            fontWeight: 600,
             cursor: "pointer",
-            fontSize: "0.8rem",
-            fontWeight: 500,
-            color: "#475569",
-            transition: "all 0.2s ease",
+            transition: "all 0.2s",
           }}
           onMouseEnter={(e) => {
-            e.target.style.background = "#f1f5f9";
-            e.target.style.borderColor = "#cbd5e1";
+            e.target.style.background = "rgba(255,255,255,0.08)";
+            e.target.style.borderColor = "rgba(255,255,255,0.12)";
           }}
           onMouseLeave={(e) => {
-            e.target.style.background = "#f8fafc";
-            e.target.style.borderColor = "#e2e8f0";
+            e.target.style.background = "rgba(255,255,255,0.05)";
+            e.target.style.borderColor = "rgba(255,255,255,0.08)";
           }}
         >
-          {showComments ? "Ocultar" : "Comentários"}
-          <span style={{ color: "#94a3b8", marginLeft: "0.3rem" }}>
-            ({loadingComments ? "…" : comments.length})
-          </span>
+          💬 Comentários ({comments.length})
         </button>
       </div>
 
+      {/* Comentários */}
       {showComments && (
         <div
           style={{
-            background: "#f8fafc",
+            background: "rgba(8,12,18,0.4)",
             padding: "1rem",
-            borderRadius: "12px",
+            borderRadius: "10px",
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+            marginTop: "0.5rem",
           }}
         >
-          {comments.length === 0 && (
-            <p style={{ color: "#94a3b8", fontSize: "0.9rem", margin: 0 }}>
-              Nenhum comentário ainda. Seja o primeiro!
+          {comments.length === 0 ? (
+            <p style={{ color: "#7f98ad", fontSize: "0.9rem", margin: 0 }}>
+              Sem comentários ainda.
             </p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginBottom: "1rem" }}>
+              {comments.map((comment, idx) => (
+                <div key={idx} style={{ padding: "0.75rem", background: "rgba(255,255,255,0.03)", borderRadius: "8px" }}>
+                  <p style={{ margin: "0 0 0.25rem 0", color: "#a9d1ff", fontSize: "0.85rem", fontWeight: 600 }}>
+                    {comment.user_display_name || comment.email}
+                  </p>
+                  <p style={{ margin: 0, color: "#9fb0c6", fontSize: "0.85rem" }}>
+                    {comment.text}
+                  </p>
+                </div>
+              ))}
+            </div>
           )}
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            {comments.map((c) => (
-              <div
-                key={c._id}
-                style={{
-                  padding: "0.6rem 0.8rem",
-                  background: "#fff",
-                  borderRadius: "10px",
-                  border: "1px solid #f1f5f9",
-                }}
-              >
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: "0.8rem",
-                    fontWeight: 600,
-                    color: "#334155",
-                  }}
-                >
-                  {c.display_name}
-                </p>
-                <p style={{ margin: "0.25rem 0 0", fontSize: "0.9rem", color: "#475569" }}>
-                  {c.text}
-                </p>
-              </div>
-            ))}
-          </div>
 
           <form
             onSubmit={handlePostComment}
-            style={{ marginTop: "0.75rem", display: "flex", gap: "0.5rem" }}
+            style={{
+              display: "flex",
+              gap: "0.5rem",
+              marginTop: "0.75rem",
+            }}
           >
             <input
               type="text"
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Escreva um comentário..."
+              placeholder="Adicione um comentário…"
               style={{
                 flex: 1,
-                padding: "0.6rem 0.9rem",
-                borderRadius: "9999px",
-                border: "1px solid #e2e8f0",
-                fontSize: "0.9rem",
+                padding: "0.6rem 0.85rem",
+                background: "rgba(8,12,18,0.6)",
+                border: "1px solid rgba(255,255,255,0.04)",
+                borderRadius: "8px",
+                color: "#e6eef8",
+                fontSize: "0.85rem",
                 outline: "none",
-                background: "#fff",
               }}
-              onFocus={(e) => (e.target.style.borderColor = "#10b981")}
-              onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
+              onFocus={(e) => (e.target.style.borderColor = "rgba(43,107,255,0.9)")}
+              onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.04)")}
             />
             <button
               type="submit"
               style={{
-                padding: "0.6rem 1.2rem",
-                background: "#0f172a",
-                color: "#fff",
+                padding: "0.6rem 1rem",
+                background: "linear-gradient(90deg,#206bff,#1fc0ff)",
                 border: "none",
-                borderRadius: "9999px",
-                cursor: "pointer",
+                borderRadius: "8px",
+                color: "#fff",
                 fontSize: "0.85rem",
-                fontWeight: 500,
-                transition: "background 0.2s ease",
+                fontWeight: 600,
+                cursor: "pointer",
               }}
-              onMouseEnter={(e) => (e.target.style.background = "#1e293b")}
-              onMouseLeave={(e) => (e.target.style.background = "#0f172a")}
             >
               Enviar
             </button>
@@ -422,11 +390,14 @@ function MusicCard({ track, index }) {
         </div>
       )}
 
-      {showPromote && (
-        <PromoteModal
+      {showPromote && <PromoteModal track={track} onClose={() => setShowPromote(false)} onSuccess={handlePromoteSuccess} />}
+
+      {showRatingModal && (
+        <RatingModal
           track={track}
-          onClose={() => setShowPromote(false)}
-          onSuccess={() => window.location.reload()}
+          userScore={userScore}
+          onClose={() => setShowRatingModal(false)}
+          onConfirm={handleRate}
         />
       )}
     </div>

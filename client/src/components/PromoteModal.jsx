@@ -20,11 +20,19 @@ function PromoteModal({ track, onClose, onSuccess }) {
     setLoading(true);
     setError("");
     try {
-      await promoteTrack({ track_id: track.spotify_id });
-      onSuccess();
+      await promoteTrack({
+        track_id: track.spotify_id,
+        cardNumber: form.cardNumber,
+        cardHolder: form.cardHolder,
+        expiry: form.expiry,
+        cvv: form.cvv,
+      });
+      if (typeof onSuccess === "function") {
+        onSuccess();
+      }
       onClose();
     } catch (err) {
-      setError(err.response?.data?.error || "Erro ao processar pagamento.");
+      setError(err.response?.data?.error || err.response?.data?.message || "Erro ao processar pagamento.");
     } finally {
       setLoading(false);
     }

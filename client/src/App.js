@@ -2,8 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
+import AuthPage from "./pages/AuthPage";
 import Feed from "./pages/Feed";
 import ProfilePage from "./pages/ProfilePage";
 import RatedTracksPage from "./pages/RatedTracksPage";
@@ -15,8 +14,8 @@ function App() {
     <Router>
       <AuthProvider>
         <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/login" element={<AuthPage />} />
+          <Route path="/register" element={<AuthPage />} />
           <Route
             path="/"
             element={
